@@ -1,8 +1,0 @@
-.env
-Lib/site-packages
-.lock
-CACHEDIR.TAG
-.python-version
-uv.lock
-.venv
-.gitignore
