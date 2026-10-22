@@ -6,3 +6,4 @@ CACHEDIR.TAG
 Lib/site-packages
 uv.lock
 translationtools.zip
+.gitignore
