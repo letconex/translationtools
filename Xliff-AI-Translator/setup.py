@@ -21,7 +21,7 @@ Usage:
     This script is used to build and distribute the package, not for direct execution.
 """
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 # Read the contents of your README file
 with open('README.md', encoding='utf-8') as f:
@@ -39,7 +39,7 @@ setup(
     author_email='mario.chauvet@icloud.com',
     url='https://github.com/sutasrof/Xliff-AI-Translator',
     install_requires=[
-        'transformers[torch]>=4.34.1',
+        'transformers[torch]>=4.34.1<5.0.0',
         'sentencepiece>=0.1.99',
         'lxml>=4.9.3'
     ],
@@ -48,7 +48,7 @@ setup(
         'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
         'Operating System :: OS Independent',
     ],
-    python_requires='>=3.6',
+    python_requires='>=3.10',
     entry_points={
         'console_scripts': [
             'xliff_ai_translator=xliff_ai_translator.main:main',

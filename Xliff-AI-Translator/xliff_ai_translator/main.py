@@ -29,14 +29,13 @@ Example Command:
 
 Dependencies:
 - lxml for XML parsing
-- transformers library from Hugging Face for AI-based translation
+- transformers library from Hugging Face for AI-based translation, version < 5
 """
 
 import argparse
 import re
 from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import Optional
 
 from lxml import etree
 from transformers import AutoTokenizer, M2M100ForConditionalGeneration
@@ -118,7 +117,7 @@ class TextContainer:
             elements within the container.
     """
 
-    text: Optional[str] = None
+    text: str | None = None
     g_elements: list[GElement] = field(default_factory=list)
 
 
@@ -172,7 +171,7 @@ def parse_xliff(file_path):
         files = parse_xliff('path/to/file.xlf')
     """
 
-    with open(file_path, 'r', encoding='utf-8') as file:
+    with open(file=file_path, mode='r', encoding='utf-8') as file:
         tree = etree.parse(file)
     root = tree.getroot()
 
@@ -207,7 +206,7 @@ def parse_xliff(file_path):
     return files
 
 
-def parse_text_container(elem, ns):
+def parse_text_container(elem, ns) -> TextContainer:
     """
     Parses a text container element in an XLIFF file to extract text and 'g' elements.
 
@@ -221,11 +220,11 @@ def parse_text_container(elem, ns):
 
     text_container = TextContainer()
     if elem is not None:
-        # S'il y a du texte directement dans l'élément, le récupérer
+        # If there is text directly in the element, retrieve it
         if elem.text:
             text_container.text = elem.text.strip()
 
-        # Parcourir les éléments <g> s'ils existent
+        # Parse the <g> elements if they exist
         for g_elem in elem.findall('default:g', namespaces=ns):
             g_id = g_elem.get('id')
             g_ctype = g_elem.get('ctype')
@@ -236,7 +235,7 @@ def parse_text_container(elem, ns):
     return text_container
 
 
-def copy_source_to_target(files: list[File]):
+def copy_source_to_target(files: list[File]) -> None:
     """
     Copies source text to the target text for each translation unit in the provided files.
 
@@ -259,7 +258,7 @@ def copy_source_to_target(files: list[File]):
                         trans_unit.source.g_elements)
 
 
-def contains_letters(text):
+def contains_letters(text) -> bool:
     """
     Checks if a given text string contains any letters.
 
@@ -290,57 +289,54 @@ def translate_targets(files, dest_lang, model, tokenizer):
         This function directly modifies the provided File objects.
     """
 
-    # Préparer la liste de textes à traduire
+    # Prepare the list of texts to translate
     text_to_translate = []
-    mapping = []  # Pour suivre où chaque texte doit aller
+    mapping = []  # To track where each text should go
 
     for file in files:
         for trans_unit in file.trans_units:
-            # Ajouter le texte source à la liste de traduction si ce n'est pas vide
-            # et s'il contient des lettres
+            # Add the source text to the translation list if it's not empty and it contains letters
             if (trans_unit.source.text and trans_unit.source.text.strip()
                     and contains_letters(trans_unit.source.text)):
                 text_to_translate.append(trans_unit.source.text)
-                # None pour les textes qui ne sont pas dans <g>
+                # None for the texts that are not in <g>
                 mapping.append((trans_unit, 'text', None))
             else:
-                # Conserver le texte original si le texte ne contient pas de lettres
+                # Keep the original text if the text does not contain any letters
                 trans_unit.target.text = trans_unit.source.text
 
-            # Faire de même pour les éléments <g> s'ils existent et ne sont pas vides
+            # Do the same for the elements if they exist and are not empty
             for g_element in trans_unit.source.g_elements:
                 if g_element.text and g_element.text.strip() and contains_letters(g_element.text):
                     text_to_translate.append(g_element.text)
                     mapping.append((trans_unit, 'g', g_element))
                 else:
-                    # Trouver l'élément <g> correspondant dans `target`
-                    # et conserver le texte original
+                    # Find the corresponding <g> element in `target` and keep the original text
                     corresponding_g_element = next(
                         (ge for ge in trans_unit.target.g_elements if ge.id == g_element.id), None)
                     if corresponding_g_element:
                         corresponding_g_element.text = g_element.text
 
-    # Traduire en une seule fois pour plus d'efficacité, si on a des textes à traduire
-
+    # Translate only if there are texts to translate 
     print(text_to_translate)
 
     if text_to_translate:
         translated_texts = translate_batch(
             text_to_translate, dest_lang, model, tokenizer)
 
-        # Assigner les textes traduits à leur emplacement respectif dans `target`
+        # Assign the translated texts to their respective positions in `target`
         for (trans_unit, text_type, g_element), translation in zip(mapping, translated_texts):
             if text_type == 'text':
-                # mise à jour du texte directement dans `target`
+                # update the text directly in `target`
                 trans_unit.target.text = translation
             elif text_type == 'g' and g_element is not None:
-                # Trouver l'élément <g> correspondant dans `target` et le mettre à jour
+                # Find the corresponding g-element in `target` and update it
                 corresponding_g_element = next(
                     (ge for ge in trans_unit.target.g_elements if ge.id == g_element.id), None)
                 if corresponding_g_element:
                     corresponding_g_element.text = translation
     else:
-        print("Aucun texte à traduire.")
+        print("No text to be translated.")
 
     return files
 
@@ -357,13 +353,13 @@ def build_xliff(files, target_language):
         str: The XML string representation of the XLIFF file.
     """
 
-    # Créer l'élément racine avec les espaces de noms nécessaires
+    # Create the root element with the necessary namespaces
     nsmap = {
         None: "urn:oasis:names:tc:xliff:document:1.2",
         "xsi": "http://www.w3.org/2001/XMLSchema-instance",
         "xhtml": "http://www.w3.org/1999/xhtml"
     }
-    # Créer l'élément racine avec les espaces de noms nécessaires
+    # Create the root element with the necessary namespaces
     xliff_elem = etree.Element("xliff", nsmap=nsmap, version="1.2")
     xliff_elem.set("{http://www.w3.org/2001/XMLSchema-instance}schemaLocation",
                    "urn:oasis:names:tc:xliff:document:1.2 "
@@ -380,18 +376,18 @@ def build_xliff(files, target_language):
             is not None else target_language,
         }
 
-        # Créer l'élément <file> pour chaque fichier
+        # Create the <file> element for each file
         file_elem = etree.SubElement(xliff_elem, "file", file_attributes)
 
-        # Créer et ajouter le <body>
+        # Create and add the <body>
         body_elem = etree.SubElement(file_elem, "body")
 
         for trans_unit in file.trans_units:
-            # Créer l'élément <trans-unit>
+            # Create the <trans-unit> element
             trans_unit_elem = etree.SubElement(
                 body_elem, "trans-unit", {"id": trans_unit.id})
 
-            # Ajouter l'élément <source> et son contenu
+            # Add the <source> element and its content
             source_elem = etree.SubElement(trans_unit_elem, "source")
             if trans_unit.source.text:
                 source_elem.text = trans_unit.source.text
@@ -402,7 +398,7 @@ def build_xliff(files, target_language):
                 })
                 g_elem.text = g_element.text
 
-            # Ajouter l'élément <target> et son contenu
+            # Add the <target> element and its content
             target_elem = etree.SubElement(trans_unit_elem, "target")
             if trans_unit.target.text:
                 target_elem.text = trans_unit.target.text
@@ -413,7 +409,7 @@ def build_xliff(files, target_language):
                 })
                 g_elem.text = g_element.text
 
-    # Convertir l'arbre XML en une chaîne de caractères
+    # Convert the XML tree to a string with pretty printing and UTF-8 encoding
     xml_output = etree.tostring(
         xliff_elem,
         pretty_print=True,
@@ -424,7 +420,7 @@ def build_xliff(files, target_language):
     return xml_output
 
 
-def main():
+def main() -> None:
     """
     Main function for translating XLIFF files using command-line arguments.
 
@@ -471,7 +467,6 @@ def main():
 
     with open(args.destination, 'w', encoding='utf-8') as f:
         f.write(translated_xliff_content)
-
 
 if __name__ == "__main__":
     main()
