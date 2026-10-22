@@ -4,3 +4,5 @@ Lib/site-packages
 CACHEDIR.TAG
 .python-version
 uv.lock
+.venv
+.gitignore
