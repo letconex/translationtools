@@ -2,10 +2,10 @@
 import os
 
 API_KEY: str | None = os.getenv(key="API_KEY")  # Load from .env file
+print(API_KEY)
 
 def main():
     print("Hello from translationtools!")
 
-print(API_KEY)
 if __name__ == "__main__":
     main()
