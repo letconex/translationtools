@@ -1,6 +1,3 @@
-# converted from java
-
-
 import tkinter as tk
 from tkinter import filedialog, messagebox, simpledialog
 from tkinter.ttk import Button, Frame
