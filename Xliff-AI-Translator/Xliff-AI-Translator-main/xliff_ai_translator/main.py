@@ -36,9 +36,10 @@ import argparse
 import re
 from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import List, Optional
-from transformers import AutoTokenizer, M2M100ForConditionalGeneration
+from typing import Optional
+
 from lxml import etree
+from transformers import AutoTokenizer, M2M100ForConditionalGeneration
 
 
 @dataclass
@@ -70,13 +71,13 @@ def translate_batch(text_batch, dest_lang, model, tokenizer):
     Translates a batch of text strings into a specified destination language.
 
     Args:
-        text_batch (List[str]): A list of text strings for translation.
+        text_batch (list[str]): A list of text strings for translation.
         dest_lang (str): The ISO code of the destination language.
         model (transformers.PreTrainedModel): The pre-trained translation model.
         tokenizer (transformers.PreTrainedTokenizer): The tokenizer for the model.
 
     Returns:
-        List[str]: The list of translated strings in the destination language.
+        list[str]: The list of translated strings in the destination language.
 
     Example usage:
         translated_texts = translate_batch(["Hello, world!"], 'fr', model, tokenizer)
@@ -113,12 +114,12 @@ class TextContainer:
 
     Attributes:
         text (Optional[str]): Text content of the container.
-        g_elements (List[GElement]): List of GElement objects representing 'g'
+        g_elements (list[GElement]): list of GElement objects representing 'g'
             elements within the container.
     """
 
     text: Optional[str] = None
-    g_elements: List[GElement] = field(default_factory=list)
+    g_elements: list[GElement] = field(default_factory=list)
 
 
 @dataclass
@@ -147,14 +148,14 @@ class File:
         datatype (str): The data type of the file.
         source_language (str): The source language of the file.
         target_language (str): The target language of the file.
-        trans_units (List[TransUnit]): A list of TransUnit objects within the file.
+        trans_units (list[TransUnit]): A list of TransUnit objects within the file.
     """
 
     original: str
     datatype: str
     source_language: str
     target_language: str
-    trans_units: List[TransUnit] = field(default_factory=list)
+    trans_units: list[TransUnit] = field(default_factory=list)
 
 
 def parse_xliff(file_path):
@@ -165,7 +166,7 @@ def parse_xliff(file_path):
         file_path (str): Path to the XLIFF file.
 
     Returns:
-        List[File]: A list of File objects representing the content of the XLIFF file.
+        list[File]: A list of File objects representing the content of the XLIFF file.
 
     Example usage:
         files = parse_xliff('path/to/file.xlf')
@@ -235,12 +236,12 @@ def parse_text_container(elem, ns):
     return text_container
 
 
-def copy_source_to_target(files: List[File]):
+def copy_source_to_target(files: list[File]):
     """
     Copies source text to the target text for each translation unit in the provided files.
 
     Args:
-        files (List[File]): A list of File objects containing translation units.
+        files (list[File]): A list of File objects containing translation units.
 
     Note:
         This function directly modifies the provided File objects.
@@ -277,13 +278,13 @@ def translate_targets(files, dest_lang, model, tokenizer):
     Translates the target text of each translation unit in the provided files.
 
     Args:
-        files (List[File]): A list of File objects to translate.
+        files (list[File]): A list of File objects to translate.
         dest_lang (str): The destination language for translation.
         model (transformers.PreTrainedModel): The translation model.
         tokenizer (transformers.PreTrainedTokenizer): The tokenizer for the model.
 
     Returns:
-        List[File]: The list of File objects with translated target texts.
+        list[File]: The list of File objects with translated target texts.
 
     Note:
         This function directly modifies the provided File objects.
@@ -349,7 +350,7 @@ def build_xliff(files, target_language):
     Builds an XLIFF file from the provided list of File objects.
 
     Args:
-        files (List[File]): A list of File objects to include in the XLIFF.
+        files (list[File]): A list of File objects to include in the XLIFF.
         target_language (str): The target language of the translation.
 
     Returns:
